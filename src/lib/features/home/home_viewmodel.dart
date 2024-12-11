@@ -1,35 +1,38 @@
-import 'package:my_app/app/app.bottomsheets.dart';
 import 'package:my_app/app/app.dialogs.dart';
 import 'package:my_app/app/app.locator.dart';
+import 'package:my_app/models/todo.dart';
+import 'package:my_app/services/todo_service.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
 class HomeViewModel extends BaseViewModel {
+  final _todoService = locator<TodoService>();
   final _dialogService = locator<DialogService>();
-  final _bottomSheetService = locator<BottomSheetService>();
 
-  String get counterLabel => 'Counter is: $_counter';
+  List<Todo> get todos => _todoService.getAllTodos();
 
-  int _counter = 0;
-
-  void incrementCounter() {
-    _counter++;
+  void toggleTodoComplete(String id) {
+    _todoService.toggleTodoComplete(id);
     rebuildUi();
   }
 
-  void showDialog() {
-    _dialogService.showCustomDialog(
-      variant: DialogType.infoAlert,
-      title: 'Steve Rocks!',
-      description: 'Give steve $_counter stars on Github',
+  Future<void> deleteTodo(String id) async {
+    final response = await _dialogService.showCustomDialog(
+      variant: DialogType.confirmDelete,
+      title: 'Delete Todo',
+      description: 'Are you sure you want to delete this todo?',
     );
+
+    if (response?.confirmed ?? false) {
+      _todoService.deleteTodo(id);
+      rebuildUi();
+    }
   }
 
-  void showBottomSheet() {
-    _bottomSheetService.showCustomSheet(
-      variant: BottomSheetType.notice,
-      title: 'title',
-      description: 'desc',
+  void showTodoDetails(Todo todo) {
+    _dialogService.showCustomDialog(
+      variant: DialogType.todoDetails,
+      data: todo,
     );
   }
 }
