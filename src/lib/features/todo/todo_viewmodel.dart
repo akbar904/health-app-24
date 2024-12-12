@@ -1,70 +1,62 @@
 import 'package:my_app/app/app.locator.dart';
 import 'package:my_app/app/models/todo.dart';
 import 'package:my_app/app/services/todo_service.dart';
-import 'package:my_app/enums/bottom_sheet_type.dart';
 import 'package:my_app/enums/dialog_type.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
-class HomeViewModel extends BaseViewModel {
+class TodoViewModel extends BaseViewModel {
   final _todoService = locator<TodoService>();
   final _dialogService = locator<DialogService>();
-  final _bottomSheetService = locator<BottomSheetService>();
+  final _navigationService = locator<NavigationService>();
 
-  bool? _filterStatus;
-  List<Todo> get todos =>
-      _todoService.getFilteredTodos(isCompleted: _filterStatus);
+  Todo? _todo;
+  Todo? get todo => _todo;
 
-  void filterTodos(bool? status) {
-    _filterStatus = status;
+  void initialize(Todo todo) {
+    _todo = todo;
     rebuildUi();
   }
 
-  Future<void> addTodo() async {
-    final response = await _bottomSheetService.showCustomSheet(
-      variant: BottomSheetType.notice,
-      title: 'Add Todo',
-      description: 'Add a new todo item',
-    );
-
-    if (response?.confirmed == true && response?.data != null) {
-      final todo = response!.data as Todo;
-      _todoService.addTodo(todo);
+  void toggleTodo() {
+    if (_todo != null) {
+      _todoService.toggleTodoCompletion(_todo!.id);
+      _todo = _todoService.todos.firstWhere((t) => t.id == _todo!.id);
       rebuildUi();
     }
   }
 
-  Future<void> editTodo(Todo todo) async {
+  Future<void> editTodo() async {
+    if (_todo == null) return;
+
     final response = await _dialogService.showCustomDialog(
       variant: DialogType.custom,
       title: 'Edit Todo',
       description: 'Edit your todo item',
-      data: todo,
+      data: _todo,
     );
 
     if (response?.confirmed == true && response?.data != null) {
       final updatedTodo = response!.data as Todo;
       _todoService.updateTodo(updatedTodo);
+      _todo = updatedTodo;
       rebuildUi();
     }
   }
 
-  Future<void> deleteTodo(Todo todo) async {
+  Future<void> deleteTodo() async {
+    if (_todo == null) return;
+
     final response = await _dialogService.showCustomDialog(
       variant: DialogType.custom,
       title: 'Delete Todo',
       description: 'Are you sure you want to delete this todo?',
-      data: todo,
+      data: _todo,
     );
 
     if (response?.confirmed == true) {
-      _todoService.deleteTodo(todo.id);
-      rebuildUi();
+      _todoService.deleteTodo(_todo!.id);
+      _navigationService.back();
     }
-  }
-
-  void toggleTodo(String id) {
-    _todoService.toggleTodoCompletion(id);
-    rebuildUi();
   }
 }
