@@ -1,35 +1,69 @@
-import 'package:my_app/app/app.bottomsheets.dart';
-import 'package:my_app/app/app.dialogs.dart';
-import 'package:my_app/app/app.locator.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
+import 'package:my_app/app/app.locator.dart';
+import 'package:my_app/app/app.router.dart';
+import 'package:my_app/models/todo_model.dart';
+import 'package:my_app/features/home/home_repository.dart';
+import 'package:my_app/enums/dialog_type.dart';
+import 'package:my_app/enums/bottom_sheet_type.dart';
 
 class HomeViewModel extends BaseViewModel {
+  final _navigationService = locator<NavigationService>();
   final _dialogService = locator<DialogService>();
   final _bottomSheetService = locator<BottomSheetService>();
+  final _repository = HomeRepository();
 
-  String get counterLabel => 'Counter is: $_counter';
+  List<TodoModel> _todos = [];
+  List<TodoModel> get todos => _todos;
 
-  int _counter = 0;
+  void initialize() {
+    _loadTodos();
+  }
 
-  void incrementCounter() {
-    _counter++;
-    rebuildUi();
+  void _loadTodos() {
+    setBusy(true);
+    _todos = _repository.getTodos();
+    setBusy(false);
+  }
+
+  void navigateToTodo() {
+    _navigationService.navigateToTodoView();
+  }
+
+  Future<void> deleteTodo(String id) async {
+    final response = await _dialogService.showDialog(
+      title: 'Delete Todo',
+      description: 'Are you sure you want to delete this todo?',
+      buttonTitle: 'Delete',
+      cancelTitle: 'Cancel',
+    );
+
+    if (response?.confirmed ?? false) {
+      _repository.deleteTodo(id);
+      _loadTodos();
+      notifyListeners();
+    }
+  }
+
+  void toggleTodoStatus(String id) {
+    _repository.toggleTodoStatus(id);
+    _loadTodos();
+    notifyListeners();
   }
 
   void showDialog() {
     _dialogService.showCustomDialog(
       variant: DialogType.infoAlert,
-      title: 'Steve Rocks!',
-      description: 'Give steve $_counter stars on Github',
+      title: 'Todo App',
+      description: 'A simple todo app built with Stacked architecture',
     );
   }
 
   void showBottomSheet() {
     _bottomSheetService.showCustomSheet(
       variant: BottomSheetType.notice,
-      title: 'title',
-      description: 'desc',
+      title: 'Todo App',
+      description: 'Manage your tasks efficiently',
     );
   }
 }
