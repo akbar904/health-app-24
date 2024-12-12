@@ -4,10 +4,13 @@ import 'package:my_app/app/app.locator.dart';
 import 'package:my_app/app/app.router.dart';
 import 'package:my_app/models/todo_model.dart';
 import 'package:my_app/features/home/home_repository.dart';
+import 'package:my_app/enums/dialog_type.dart';
+import 'package:my_app/enums/bottom_sheet_type.dart';
 
 class HomeViewModel extends BaseViewModel {
   final _navigationService = locator<NavigationService>();
   final _dialogService = locator<DialogService>();
+  final _bottomSheetService = locator<BottomSheetService>();
   final _repository = HomeRepository();
 
   List<TodoModel> _todos = [];
