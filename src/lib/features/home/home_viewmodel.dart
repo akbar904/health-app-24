@@ -1,35 +1,45 @@
-import 'package:my_app/app/app.bottomsheets.dart';
-import 'package:my_app/app/app.dialogs.dart';
 import 'package:my_app/app/app.locator.dart';
+import 'package:my_app/models/todo.dart';
+import 'package:my_app/services/todo_service.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
-class HomeViewModel extends BaseViewModel {
+class HomeViewModel extends ReactiveViewModel {
+  final _todoService = locator<TodoService>();
   final _dialogService = locator<DialogService>();
-  final _bottomSheetService = locator<BottomSheetService>();
 
-  String get counterLabel => 'Counter is: $_counter';
+  List<Todo> get todos => _todoService.todos;
 
-  int _counter = 0;
+  Future<void> showAddTodoDialog() async {
+    final response = await _dialogService.showCustomDialog(
+      variant: 'todo',
+      title: 'Add Todo',
+    );
 
-  void incrementCounter() {
-    _counter++;
+    if (response?.confirmed == true &&
+        response?.data != null &&
+        response!.data['title'].toString().isNotEmpty) {
+      final todo = Todo(
+        id: DateTime.now().toString(),
+        title: response.data['title'],
+        description: response.data['description'] ?? '',
+        createdAt: DateTime.now(),
+      );
+      _todoService.addTodo(todo);
+      rebuildUi();
+    }
+  }
+
+  void toggleTodoCompletion(String id) {
+    _todoService.toggleTodoCompletion(id);
     rebuildUi();
   }
 
-  void showDialog() {
-    _dialogService.showCustomDialog(
-      variant: DialogType.infoAlert,
-      title: 'Steve Rocks!',
-      description: 'Give steve $_counter stars on Github',
-    );
+  void deleteTodo(String id) {
+    _todoService.deleteTodo(id);
+    rebuildUi();
   }
 
-  void showBottomSheet() {
-    _bottomSheetService.showCustomSheet(
-      variant: BottomSheetType.notice,
-      title: 'title',
-      description: 'desc',
-    );
-  }
+  @override
+  List<ReactiveServiceMixin> get reactiveServices => [_todoService];
 }
