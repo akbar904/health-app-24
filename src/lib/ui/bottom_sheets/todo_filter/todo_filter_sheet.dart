@@ -16,8 +16,15 @@ class TodoFilterSheet extends StatefulWidget {
 }
 
 class _TodoFilterSheetState extends State<TodoFilterSheet> {
-  late bool? _isCompleted = widget.request.data?['isCompleted'];
-  late String _searchQuery = widget.request.data?['searchQuery'] ?? '';
+  late bool? _isCompleted;
+  late String _searchQuery;
+
+  @override
+  void initState() {
+    super.initState();
+    _isCompleted = widget.request.data?['isCompleted'] as bool?;
+    _searchQuery = (widget.request.data?['searchQuery'] as String?) ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +55,7 @@ class _TodoFilterSheetState extends State<TodoFilterSheet> {
               border: OutlineInputBorder(),
             ),
             onChanged: (value) => _searchQuery = value,
-            initialValue: _searchQuery,
+            controller: TextEditingController(text: _searchQuery),
           ),
           const SizedBox(height: 20),
           DropdownButtonFormField<bool?>(

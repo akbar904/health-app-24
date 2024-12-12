@@ -3,6 +3,9 @@ import 'package:stacked_services/stacked_services.dart';
 import 'package:my_app/app/app.locator.dart';
 import 'package:my_app/features/todo/todo_repository.dart';
 import 'package:my_app/models/todo_model.dart';
+import 'package:my_app/enums/dialog_type.dart';
+import 'package:my_app/enums/bottom_sheet_type.dart';
+import 'package:my_app/features/todo/widgets/add_todo_form.dart';
 
 class TodoViewModel extends BaseViewModel {
   final _todoRepository = TodoRepository();
@@ -28,12 +31,12 @@ class TodoViewModel extends BaseViewModel {
   }
 
   Future<void> showAddDialog() async {
-    final dialogResponse = await _dialogService.showCustomDialog(
-      variant: DialogType.custom,
+    final result = await _dialogService.showCustomDialog(
+      variant: DialogType.form,
       title: 'Add Todo',
       mainButtonTitle: 'Add',
       data: AddTodoForm(
-        onSubmit: (title, description) {
+        onSubmit: (String title, String description) {
           final newTodo = TodoModel(
             id: DateTime.now().toString(),
             title: title,
@@ -47,21 +50,21 @@ class TodoViewModel extends BaseViewModel {
       ),
     );
 
-    if (dialogResponse?.confirmed ?? false) {
+    if (result?.confirmed ?? false) {
       _loadTodos();
     }
   }
 
   Future<void> showEditDialog(TodoModel todo) async {
-    final dialogResponse = await _dialogService.showCustomDialog(
-      variant: DialogType.custom,
+    final result = await _dialogService.showCustomDialog(
+      variant: DialogType.form,
       title: 'Edit Todo',
       mainButtonTitle: 'Update',
       data: AddTodoForm(
         initialTitle: todo.title,
         initialDescription: todo.description,
         isEditing: true,
-        onSubmit: (title, description) {
+        onSubmit: (String title, String description) {
           final updatedTodo = todo.copyWith(
             title: title,
             description: description,
@@ -72,20 +75,20 @@ class TodoViewModel extends BaseViewModel {
       ),
     );
 
-    if (dialogResponse?.confirmed ?? false) {
+    if (result?.confirmed ?? false) {
       _loadTodos();
     }
   }
 
   Future<void> deleteTodo(String id) async {
-    final dialogResponse = await _dialogService.showConfirmationDialog(
+    final result = await _dialogService.showConfirmationDialog(
       title: 'Delete Todo',
       description: 'Are you sure you want to delete this todo?',
       cancelTitle: 'Cancel',
       confirmationTitle: 'Delete',
     );
 
-    if (dialogResponse?.confirmed ?? false) {
+    if (result?.confirmed ?? false) {
       _todoRepository.deleteTodo(id);
       _loadTodos();
     }
@@ -97,8 +100,8 @@ class TodoViewModel extends BaseViewModel {
   }
 
   Future<void> showFilterSheet() async {
-    final sheetResponse = await _bottomSheetService.showCustomSheet(
-      variant: BottomSheetType.custom,
+    final result = await _bottomSheetService.showCustomSheet(
+      variant: BottomSheetType.filter,
       title: 'Filter Todos',
       data: {
         'isCompleted': _filterCompleted,
@@ -106,9 +109,9 @@ class TodoViewModel extends BaseViewModel {
       },
     );
 
-    if (sheetResponse?.data != null) {
-      _filterCompleted = sheetResponse!.data['isCompleted'];
-      _searchQuery = sheetResponse.data['searchQuery'];
+    if (result?.data != null) {
+      _filterCompleted = result!.data['isCompleted'] as bool?;
+      _searchQuery = result.data['searchQuery'] as String;
       _loadTodos();
     }
   }
