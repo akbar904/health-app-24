@@ -7,7 +7,7 @@ class TodoModel extends Equatable {
   final bool isCompleted;
   final DateTime createdAt;
 
-  const TodoModel({
+  TodoModel({
     required this.id,
     required this.title,
     required this.description,
@@ -32,5 +32,5 @@ class TodoModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, title, description, isCompleted, createdAt];
+  List<Object> get props => [id, title, description, isCompleted, createdAt];
 }
