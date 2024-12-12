@@ -1,35 +1,54 @@
-import 'package:my_app/app/app.bottomsheets.dart';
-import 'package:my_app/app/app.dialogs.dart';
-import 'package:my_app/app/app.locator.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
+import 'package:my_app/app/app.locator.dart';
+import 'package:my_app/app/app.bottomsheets.dart';
+import 'package:my_app/app/app.dialogs.dart';
+import 'package:my_app/features/todos/todo_model.dart';
+import 'package:my_app/services/todo_service.dart';
 
 class HomeViewModel extends BaseViewModel {
-  final _dialogService = locator<DialogService>();
+  final _todoService = locator<TodoService>();
   final _bottomSheetService = locator<BottomSheetService>();
+  final _dialogService = locator<DialogService>();
 
-  String get counterLabel => 'Counter is: $_counter';
+  List<Todo> _todos = [];
+  List<Todo> get todos => _todos;
 
-  int _counter = 0;
-
-  void incrementCounter() {
-    _counter++;
-    rebuildUi();
+  Future<void> initialize() async {
+    await runBusyFuture(_loadTodos());
   }
 
-  void showDialog() {
-    _dialogService.showCustomDialog(
-      variant: DialogType.infoAlert,
-      title: 'Steve Rocks!',
-      description: 'Give steve $_counter stars on Github',
-    );
+  Future<void> _loadTodos() async {
+    _todos = await _todoService.getTodos();
+    notifyListeners();
   }
 
-  void showBottomSheet() {
-    _bottomSheetService.showCustomSheet(
-      variant: BottomSheetType.notice,
-      title: 'title',
-      description: 'desc',
+  Future<void> addTodo() async {
+    final response = await _bottomSheetService.showCustomSheet(
+      variant: BottomSheetType.addTodo,
     );
+
+    if (response?.confirmed == true && response?.data != null) {
+      final description = response!.data as String;
+      await _todoService.addTodo(description);
+      await _loadTodos();
+    }
+  }
+
+  Future<void> toggleTodo(Todo todo) async {
+    await _todoService.toggleTodo(todo);
+    await _loadTodos();
+  }
+
+  Future<void> deleteTodo(Todo todo) async {
+    final response = await _dialogService.showCustomDialog(
+      variant: DialogType.confirmDelete,
+      description: 'Are you sure you want to delete "${todo.description}"?',
+    );
+
+    if (response?.confirmed == true) {
+      await _todoService.deleteTodo(todo);
+      await _loadTodos();
+    }
   }
 }
